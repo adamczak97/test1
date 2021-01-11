@@ -8,6 +8,7 @@ const fs = require('fs');
 var bodyParser = require('body-parser');
 const app = express()
 const port = 3000
+var jwt = require('jsonwebtoken');
 
 
 let schema = yup.object().shape({
@@ -23,6 +24,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', (req, res) => {
   res.send('Hello World!11')
 })
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
@@ -49,9 +51,9 @@ app.get('/hello/:name', function (req,res){
     .isValid(req.params)
     .then(function(valid) 
     {
-      if(valid == true)
+      if(valid === true)
       {
-        res.send("Hello " + req.params.name + "!")
+        res.send("Hello " + req.params.name)
         res.status(200);
       }
       else
@@ -61,10 +63,8 @@ app.get('/hello/:name', function (req,res){
       }
   });
 })
-
-
 // 3 
-var tab1 = [];
+var tab1 = [1];
 app.post('/store', function (req,res) {
   tab1.push(req.body.input);
   res.status(201);
@@ -102,3 +102,29 @@ app.post('/parse', function(req,res) {
     });
   });
 });
+
+
+const login = 'test',
+      password = '12341234',
+      PRIVATE_KEY = "someSecretKey";
+  
+app.get('/login', (req, res) => {
+  console.log(req.body);
+  if(req.body.password === password && login === req.body.login){
+    var token = jwt.sign({ login }, PRIVATE_KEY);
+    return res.status(200).send(token);
+  }
+  res.status(401).send('Invalid login data');
+})
+
+app.get('/profile', (req, res) => {
+const token = req.headers.authorization;
+
+  try {
+    var decoded = jwt.verify(token, PRIVATE_KEY);
+    res.status(200).json({login:decoded.login});
+  } catch(err) {
+    res.status(401).send('Invalid token');
+  }
+})
+
